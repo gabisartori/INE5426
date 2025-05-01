@@ -1,9 +1,7 @@
 use std::collections::{HashSet, HashMap};
-// use std::hash::Hash;
 
 type State = u32;
 type Symbol = char;
-type Value = String;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Token {
@@ -122,10 +120,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       (SEMICOLON, Token::Semicolon),
     ]);
     let transitions = HashMap::from([
-      ((S0, 'r'), (RETURN0, None)),
       ((S0, ' '), (S0, None)),
       ((S0, '\n'), (S0, None)),
       ((S0, '\t'), (S0, None)),
+      ((S0, 'r'), (RETURN0, None)),
       ((RETURN0, 'e'), (RETURN1, None)),
       ((RETURN1, 't'), (RETURN2, None)),
       ((RETURN2, 'u'), (RETURN3, None)),
@@ -155,9 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some((next_state, _command)) => {
           current_state = *next_state;
           // Ignore empty spaces
-          if !(symbol.is_whitespace()) {
-            token_value.push(*symbol);
-          }
+          if !(symbol.is_whitespace()) { token_value.push(*symbol); }
         },
         // If the transition is invalid, check if the current state is a final state
         // If it is, this means that a valid token was found
@@ -183,7 +179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       }
       i += 1;
     }
-    println!("Token list: {:?}", token_list);
+    println!("Token list: {:?}\n", token_list);
   }
   Ok(())
 }
