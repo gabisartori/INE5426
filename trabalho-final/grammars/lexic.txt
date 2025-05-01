@@ -1,0 +1,58 @@
+id:\c[\c\d]*
+int: \d+
+float: \d*\.\d*
+string: ".*"
+char: '.'
+bool: true | false
+lparenthesis: (
+rparenthesis: )
+lbrackets: [
+rbrackets: ]
+rbraces: {
+lbraces: }
+semicolon: ;
+comma: ,
+
+kw_int: int
+kw_float: float
+kw_string: string
+kw_char: char
+kw_bool: bool
+kw_if: if
+kw_elif: elif
+kw_else: else
+kw_while: while
+kw_for: for
+kw_break: break
+kw_continue: continue
+kw_return: return
+kw_def: def
+kw_print: print
+kw_read: read
+
+op_assign: =
+op_eq: ==
+op_ne: !=
+op_gt: >
+op_ge: >=
+op_lt: <
+op_le: <=
+op_and: &&
+op_or: ||
+op_xor: ^^
+op_not: !
+op_bitwise_and: &
+op_bitwise_or: |
+op_bitwise_xor: ^
+op_bitwise_not: ~
+op_l_bitshift: <<
+op_r_bitshift: >>
+op_plus: +
+op_minus: -
+op_mult: *
+op_division: /
+op_whole_division: //
+op_modular: %
+op_pow: **
+
+comment: \n//
