@@ -44,19 +44,53 @@ class FDA:
   def union(self, other: 'FDA') -> 'FDA':
     '''Realiza a união entre dois autômatos.'''
     union = FDA()
-    union.initial_state = frozenset((self.initial_state, other.initial_state))
-    union.final_states = self.final_states.union(other.final_states)
+    union.initial_state = self.concat_to_state_name(self.initial_state.union(other.initial_state), 'i')
     union.alphabet = self.alphabet.union(other.alphabet)
-    # TODO: Add transitions joining both automata
-    union.transitions = {}
-    union.states = frozenset((self.states, other.states))
+
+    self_transtion = {
+      self.concat_to_state_name(state, '0'): {
+        symbol: frozenset(self.concat_to_state_name(next_state, '0') for next_state in next_states) for symbol, next_states in self.transitions[state].items()
+      } for state in self.transitions 
+    }
+    other_transition = {
+      self.concat_to_state_name(state, '1'): {
+        symbol: frozenset(self.concat_to_state_name(next_state, '1') for next_state in next_states) for symbol, next_states in other.transitions[state].items()
+      } for state in other.transitions
+    }
+    initial_states = self.concat_to_state_name(self.initial_state, '0').union(self.concat_to_state_name(other.initial_state, '1'))
+    self_initial_trasitions = {
+      union.initial_state: {
+        '&': frozenset(frozenset((x,)) for x in initial_states)
+      }
+    }
+    union.transitions = {
+      **self_transtion,
+      **other_transition,
+      **self_initial_trasitions
+    }
+
+    union.states = frozenset(self.concat_to_state_name(state, '0') for state in self.states).union(
+      frozenset(self.concat_to_state_name(state, '1') for state in other.states)
+    ).union(
+      frozenset((union.initial_state,))
+    )
+    union.num_states = len(union.states)
+    union.final_states = frozenset(self.concat_to_state_name(state, '0') for state in self.final_states).union(
+      frozenset(self.concat_to_state_name(state, '1') for state in other.final_states)
+    )
     return union
+
+  @staticmethod
+  def concat_to_state_name(state: State, string: str) -> State:
+    '''Concatena o nome do estado com uma string.'''
+    '''Exemplo: um estado "A" vira "0A"'''
+    return frozenset(f"{string}{state_part}" for state_part in state)
 
   @staticmethod
   def state_to_string(state: State) -> str:
     '''Une as partes de um estado em uma string.'''
     '''Exemplo: um estado {"A", "B"} vira "AB"'''
-    return f"{{{','.join(sorted(state, key=lambda x: int(x) if x.isnumeric() else x))}}}"
+    return f"{{{','.join(sorted(state))}}}"
 
   def __str__(self) -> str:
     num_states = str(self.num_states)
@@ -161,3 +195,25 @@ class FDA:
     transitions.sort(key=lambda x: sorted(x[1])) # Ordena as transições pelo símbolo
     transitions.sort(key=lambda x: sorted(x[0])) # Ordena as transições pelo estado de origem
     return transitions
+
+# Debug stuff
+
+if __name__ == "__main__":
+  def show_automaton(automaton: FDA) -> None:
+    '''Mostra o autômato em formato de tabela.'''
+    print(f"Estados: {automaton.states}")
+    print(f"Estado inicial: {automaton.initial_state}")
+    print(f"Estados finais: {automaton.final_states}")
+    print(f"Alfabeto: {automaton.alphabet}")
+    print("Transições:")
+    for state in automaton.transitions:
+      for symbol in automaton.transitions[state]:
+        for next_state in automaton.transitions[state][symbol]:
+          print(f"{state} --{symbol}--> {next_state}")
+    print()
+
+  fda = FDA("2;0;{1};{a,0};0,a,1;1,a,1;1,0,1")
+  fdb = FDA("2;0;{1};{c,d};0,c,1;0,d,1;1,c,0;1,d,0")
+  fdc = fda.union(fdb)
+  fdd = fdc.deterministic_equivalent()
+  show_automaton(fdd)
