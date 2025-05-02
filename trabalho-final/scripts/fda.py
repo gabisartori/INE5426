@@ -1,7 +1,7 @@
 State = frozenset[str]
 
 class FDA:
-  def __init__(self, string: str="") -> None:
+  def __init__(self, string: str=None) -> None:
     self.string: str = string
     self.initial_state: State = None
     self.transitions: dict[State, dict[str, frozenset[State]]] = {}
