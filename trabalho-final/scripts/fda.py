@@ -1,3 +1,4 @@
+import math
 State = frozenset[int]
 
 class FDA:
@@ -107,7 +108,7 @@ class FDA:
     return frozenset(int(state_part)+num for state_part in state)
 
   @staticmethod
-  def state_to_string(state: State) -> str:
+  def state_to_string(state: State, size: int=1) -> str:
     string = ""
     for state_part in state:
       if isinstance(state_part, frozenset):
@@ -116,15 +117,21 @@ class FDA:
       else:
         string += str(state_part)
     number = int(string)
-    return chr(number)
+    output = ""
+    while len(output) < size:
+      output = chr(number % 256) + output
+      number //= 256
+    return output
 
   def __str__(self) -> str:
     '''Ouput: finals;transitions'''
-    output = "".join([self.state_to_string(state) for state in sorted(self.final_states)]) + chr(255)
+    state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
+    output = chr(state_size) # Pelo amor de deus se tiver mais que 256^256 estados esse autômato não é pra existir
+    output += "".join([self.state_to_string(state, state_size) for state in sorted(self.final_states)]) + chr(255)*state_size
     for state in sorted(self.transitions):
       for symbol in sorted(self.transitions[state]):
         for next_state in sorted(self.transitions[state][symbol]):
-          output += f"{self.state_to_string(state)}{symbol}{self.state_to_string(next_state)}"
+          output += f"{self.state_to_string(state, state_size)}{symbol}{self.state_to_string(next_state, state_size)}"
     return output
 
   def deterministic_equivalent(self) -> 'FDA':
