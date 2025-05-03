@@ -35,18 +35,20 @@ for token_type, token_data in token_types.items():
         else: transitions[start+i] = {string[i]: start+i+1}
         counter += 1
       counter += 1
-      finals.add(counter)
+      finals.add(counter-1)
     finals = {frozenset((i,)) for i in finals}
-    transitions = {frozenset((c,)): {symbol: frozenset((next_state,)) for symbol, next_state in next_states.items()} for c, next_states in transitions.items()}
+    transitions = {
+      frozenset((c,)): {
+        symbol: frozenset((frozenset((next_state,)),)) for symbol, next_state in next_states.items()
+        } for c, next_states in transitions.items()
+      }
     automaton = FDA()
     automaton.alphabet=frozenset(c for string in strings for c in string)
-    automaton.states=frozenset(frozenset((i,)) for i in range(counter))
-    automaton.transitions=transitions,
+    automaton.states=frozenset(frozenset((i,)) for i in range(counter+1))
+    automaton.transitions=transitions
     automaton.initial_state=frozenset((0,))
     automaton.final_states=finals
     automata[token_type] = automaton
-    if token_type == "const_float":
-      print(token_type, automaton.transitions, '\n')
   else:
     # The automaton is already defined in the json file, just convert it to a fda
     final_states = {state for state in token_data["final_states"]}
@@ -75,15 +77,41 @@ for token_type, token_data in token_types.items():
       else:
         raise ValueError(f"Invalid symbol {symbol} in transitions")
 
-    transitions = {frozenset((c,)): {symbol: frozenset((next_state,)) for symbol, next_state in next_states.items()} for c, next_states in transitions.items()}
+    transitions = {
+      frozenset((c,)): {
+        symbol: frozenset((frozenset((next_states, )),)) for symbol, next_states in next_states.items()
+      } for c, next_states in transitions.items()
+    }
     automaton = FDA()
     automaton.alphabet=frozenset(alphabet)
-    automaton.states=frozenset(frozenset((i,)) for i in range(len(transitions)))
+    states = set()
+    for state, transtions in transitions.items():
+      states.add(state)
+      for next_states in transtions.values():
+        states.update(next_states)
+    automaton.states=frozenset(states)
     automaton.transitions=transitions
     automaton.initial_state=frozenset((0,))
     automaton.final_states=frozenset(frozenset((i,)) for i in final_states)
     automata[token_type] = automaton
 
+mega_automaton = None
 for token_type, automaton in automata.items():
-  print(token_type, automaton.transitions, '\n')
-  
+  if mega_automaton is None: mega_automaton = automaton
+  else: mega_automaton = mega_automaton.union(automaton)
+  if token_type == "const_char" or token_type == "const_string":
+    i = 0
+    for state, next_states in mega_automaton.transitions.items():
+      for symbol, next_state in next_states.items():
+        i += len(next_state)
+        print(state, symbol, next_state)
+    print(i)
+
+# for state, next_states in mega_automaton.transitions.items():
+#   for symbol, next_state in next_states.items():
+#     print(state, symbol, next_state)
+# mega_automaton = mega_automaton.deterministic_equivalent().enumerate_states()
+# print()
+# for state, next_states in mega_automaton.transitions.items():
+#   for symbol, next_state in next_states.items():
+#     print(state, symbol, next_state)
