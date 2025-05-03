@@ -1,4 +1,5 @@
 import sys
+import json
 if len(sys.argv) != 2:
   print("Usage: python test.py <string>")
   sys.exit(1)
@@ -25,10 +26,13 @@ with open("../machines/lexer.automata", "r") as f:
     transitions[(cs_n, symbol)] = ns_n
 
 current_state = 0
+with open("../machines/lexer_tabela.automata", "r") as f:
+  state_token_list = json.load(f)
+
 for char in string:
   if (current_state, char) in transitions: current_state = transitions[(current_state, char)]
   else:
     print(f"Error: No transition from state {current_state} with symbol '{char}'")
     current_state = -1
     break
-print(current_state, current_state in final_states)
+print(current_state, current_state in final_states, state_token_list[str(current_state)] if str(current_state) in state_token_list else "None")
