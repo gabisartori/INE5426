@@ -1,15 +1,13 @@
-State = frozenset[str|int]
+State = frozenset[int]
 
 class FDA:
-  def __init__(self, string: str=None) -> None:
-    self.string: str = string
+  def __init__(self) -> None:
     self.initial_state: State = None
     self.transitions: dict[State, dict[str, frozenset[State]]] = {}
     self.final_states: frozenset[State] = frozenset()
     self.states: frozenset[State] = frozenset((frozenset(("qm",)),))
     self.num_states: int = 0
     self.alphabet: set[chr] = set()
-    if self.string: self.from_string()
     if self.initial_state is not None: self.enumerate_states()
 
   def transition_count(self) -> int:
@@ -19,31 +17,6 @@ class FDA:
       for symbol in self.transitions[state]:
         count += len(self.transitions[state][symbol])
     return count
-
-  def from_string(self) -> None:
-    temp_states = set()
-    num_states, initial_state, final_states, alphabet, *transitions = self.string.split(';')
-    initial_state = int(initial_state) if initial_state.isdigit() else initial_state
-    final_states = [int(x) if x.isdigit() else x for x in final_states[1:-1].split(',')]
-
-    self.num_states = int(num_states)
-    self.initial_state = frozenset((initial_state,))
-    self.final_states = frozenset(frozenset((state,)) for state in final_states)
-    self.alphabet = frozenset(alphabet[1:-1].split(','))
-    transitions = [transition for transition in transitions if transition]
-    for transition in transitions:
-      state, symbol, next_state = transition.split(',')
-      if symbol == "": symbol = "&"
-      state = int(state) if state.isdigit() else state
-      next_state = int(next_state) if next_state.isdigit() else next_state
-      state = frozenset((state,))
-      next_state = frozenset((next_state,))
-      if state not in self.transitions: self.transitions[state] = {}
-      if symbol not in self.transitions[state]: self.transitions[state][symbol] = frozenset()
-      self.transitions[state][symbol] = self.transitions[state][symbol].union(frozenset((next_state,)))
-      temp_states.add(state)
-      temp_states.update(self.transitions[state][symbol])
-    self.states = frozenset(temp_states)
 
   def is_deterministic(self):
     '''Busca por transições por ε ou por um estado que tenha mais de um destino para um mesmo símbolo.'''
@@ -135,18 +108,26 @@ class FDA:
 
   @staticmethod
   def state_to_string(state: State) -> str:
-    '''Une as partes de um estado em uma string.'''
-    '''Exemplo: um estado {"A", "B"} vira "AB"'''
-    return f"{{{','.join(sorted([str(state_part) for state_part in state]))}}}"
+    string = ""
+    for state_part in state:
+      if isinstance(state_part, frozenset):
+        for state_part_part in state_part:
+          string += str(state_part_part)
+      else:
+        string += str(state_part)
+    number = int(string)
+    return chr(number)
 
   def __str__(self) -> str:
-    num_states = str(self.num_states)
-    initial_state = self.state_to_string(self.initial_state)
-    alphabet = ','.join(sorted(self.alphabet))
-    final_states = ','.join([self.state_to_string(str(state)) for state in sorted(self.final_states)])
-    transitions = ';'.join([','.join([self.state_to_string(state), symbol, self.state_to_string(next_state)]) for state, symbol, next_state in self.transitions_as_tuples()])
-
-    return f"{num_states};{initial_state};{{{final_states}}};{{{alphabet}}};{transitions}"
+    '''Ouput: finals;transitions'''
+    output = "".join([self.state_to_string(state) for state in sorted(self.final_states)]) + chr(255)
+    print(sorted([ord(c) for c in output]))
+    for x in self.transitions[frozenset((0,))]: print(x, self.transitions[frozenset((0,))][x])
+    for state in sorted(self.transitions):
+      for symbol in sorted(self.transitions[state]):
+        for next_state in sorted(self.transitions[state][symbol]):
+          output += f"{self.state_to_string(state)}{symbol}{self.state_to_string(next_state)}"
+    return output
 
   def deterministic_equivalent(self) -> 'FDA':
     def epsilon_closure(state: State, closure: set=None) -> State:
@@ -216,12 +197,10 @@ class FDA:
           deterministic.final_states = deterministic.final_states.union(frozenset((state,)))
           break
 
-    deterministic.string = str(deterministic)
     return deterministic
 
   def copy(self) -> 'FDA':
     copy = FDA()
-    copy.string = self.string
     copy.initial_state = self.initial_state
     copy.final_states = self.final_states.copy()
     copy.states = self.states.copy()
@@ -242,7 +221,10 @@ class FDA:
     transitions.sort(key=lambda x: sorted(x[0])) # Ordena as transições pelo estado de origem
     return transitions
 
-# Debug stuff
+  def save(self, filename: str) -> None:
+    '''Salva o autômato em um arquivo.'''
+    with open(filename, "w") as f:
+      f.write(str(self))
 
 if __name__ == "__main__":
   def show_automaton(automaton: FDA) -> None:
@@ -257,10 +239,3 @@ if __name__ == "__main__":
         for next_state in automaton.transitions[state][symbol]:
           print(f"{state} --{symbol}--> {next_state}")
     print()
-
-  fda = FDA("2;0;{1};{a};0,a,1")
-  fdb = FDA("2;0;{1};{b};0,b,1")
-  fdc = fda.union(fdb)
-  for transition, next_state in fdc.transitions.items():
-    for symbol, next_states in next_state.items():
-      print(f"{transition} --{symbol}--> {next_states}")
