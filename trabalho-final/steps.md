@@ -5,7 +5,7 @@
   - [ ] Tipo do token
   - [ ] Valor do token
   - [ ] Posição no código (linha, coluna)
-
+- [ ] O autômato criado automaticamente não está guardando referência para quais estados representam quais tokens, é preciso que essa informação seja atualizada sempre que os estados do autômato forem alterados por operações de união/determinização
 ## Adicionais
 - [ ] Otimizar a função de transição do autômato finito com uma hash específica.
 - [ ] Substituir if por comandos retornados pelas transições
