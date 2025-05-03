@@ -1,4 +1,5 @@
 import math
+import json
 State = frozenset[int]
 
 class FDA:
@@ -9,6 +10,7 @@ class FDA:
     self.states: frozenset[State] = frozenset((frozenset(("qm",)),))
     self.num_states: int = 0
     self.alphabet: set[chr] = set()
+    self.state_token_table: dict[State, str] = {}
     if self.initial_state is not None: self.enumerate_states()
 
   def transition_count(self) -> int:
@@ -34,7 +36,7 @@ class FDA:
     non_initial_states = self.states.difference(frozenset((self.initial_state,)))
     states = {
       **{self.initial_state: 0},
-      **{state: i+1 for i, state in enumerate(non_initial_states)}
+      **{state: i+1 for i, state in enumerate(sorted(non_initial_states, key=lambda x: min(x)))}
     }
     self.states = frozenset(frozenset((states[state],)) for state in self.states)
     self.initial_state = frozenset((states[self.initial_state],))
@@ -48,6 +50,7 @@ class FDA:
         for next_state in next_states:
           new_transtions[enumerated_state][symbol] = new_transtions[enumerated_state][symbol].union(frozenset((frozenset((states[next_state],)),)))
     self.transitions = new_transtions
+    self.state_token_table = {frozenset((states[state],)): self.state_token_table[state] for state in self.state_token_table}
     return self
 
   def union(self, other: 'FDA') -> 'FDA':
@@ -91,7 +94,10 @@ class FDA:
       **other_transition,
       **self_initial_trasitions
     }
-
+    union.state_token_table = {
+      **{self.add_int_to_state(state, 1): a.state_token_table[state] for state in a.state_token_table},
+      **{self.add_int_to_state(state, b_start): b.state_token_table[state] for state in b.state_token_table}
+    }
     return union
 
   @staticmethod
@@ -202,6 +208,14 @@ class FDA:
           deterministic.final_states = deterministic.final_states.union(frozenset((state,)))
           break
 
+    deterministic.state_token_table = {}
+    # Adiciona a tabela de estados do autômato determinístico
+    for state in deterministic.final_states:
+      for state_part in sorted(state):
+        if frozenset((state_part, )) in self.state_token_table:
+          deterministic.state_token_table[state] = self.state_token_table[frozenset((state_part,))]
+          break
+
     return deterministic
 
   def copy(self) -> 'FDA':
@@ -212,6 +226,7 @@ class FDA:
     copy.num_states = self.num_states
     copy.alphabet = self.alphabet.copy()
     copy.transitions = {state: {symbol: next_state.copy() for symbol, next_state in self.transitions[state].items()} for state in self.transitions}
+    copy.state_token_table = {state: self.state_token_table[state] for state in self.state_token_table}
     return copy
 
   def transitions_as_tuples(self) -> list:
@@ -228,8 +243,9 @@ class FDA:
 
   def save(self, filename: str) -> None:
     '''Salva o autômato em um arquivo.'''
-    with open(filename, "w") as f:
-      f.write(str(self))
+    state_table = {"".join([str(x) for x in state]): self.state_token_table[state] for state in self.state_token_table}
+    with open(f"{filename}.automata", "w") as f: f.write(str(self))
+    with open(f"{filename}_tabela.automata", "w") as f: json.dump(state_table, f, indent=2)
 
 if __name__ == "__main__":
   def show_automaton(automaton: FDA) -> None:
