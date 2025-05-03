@@ -6,8 +6,16 @@ VALID_LETTERS = {
 }
 
 with open("../grammars/tokens.json", "r") as f: token_types = json.load(f)
-automata: dict[str, FDA] = {}
-for token_type, token_data in token_types.items():
+new_token_types = []
+for token_type, token_data in token_types:
+  if "string" in token_data and type(token_data["string"]) == list:
+    for x in token_data["string"]:
+      new_token_types.append((token_type, {"string": x}))
+  else:
+    new_token_types.append((token_type, token_data))
+token_types = new_token_types
+automata: list[tuple[str, FDA]] = []
+for token_type, token_data in token_types:
   '''Cria um autômato finito determinístico para cada tipo de token.
   Alguns tokens são definidos apenas por uma string, como palavras reservadas. Nesse caso, basta criar uma cadeia de estados, uma para cada letra da string.
   Outros tokens já estão definidos como autômatos, para poupar o trabalho de parsear a regex que representa o token. Como identificadores ou números.
@@ -20,36 +28,12 @@ for token_type, token_data in token_types.items():
   '''
   if "string" in token_data:
     # Create a state for each letter of the string
-    strings = token_data["string"]
-    if isinstance(strings, str): strings = [strings]
-    transitions = {}
-    finals = set()
-    state_counter = 1 # Start from state 1, as state '0' is the initial state
-    for string in strings:
-      # Create a transition for the first letter of the string from the initial state
-      if 0 in transitions: transitions[0] = {**transitions[0], **{string[0]: state_counter}}
-      else: transitions[0] = {string[0]: state_counter}
-      state_counter += 1
-      # Create the remaining transitions for the string
-      for i in range(1, len(string)):
-        char = string[i]
-        if state_counter-1 in transitions: transitions[state_counter-1] = {**transitions[state_counter-1], **{string[i]: state_counter}}
-        else: transitions[state_counter-1] = {string[i]: state_counter}
-        state_counter += 1
-      finals.add(state_counter-1)
-    finals = {frozenset((i,)) for i in finals}
-    transitions = {
-      frozenset((c,)): {
-        symbol: frozenset((frozenset((next_state,)),)) for symbol, next_state in next_states.items()
-        } for c, next_states in transitions.items()
-      }
+    string = token_data["string"]
     automaton = FDA()
-    automaton.alphabet=frozenset(c for string in strings for c in string)
-    automaton.states=frozenset(frozenset((i,)) for i in range(state_counter))
-    automaton.transitions=transitions
-    automaton.initial_state=frozenset((0,))
-    automaton.final_states=finals
-    automata[token_type] = automaton
+    automaton.alphabet=frozenset(string)
+    automaton.states=frozenset(frozenset((i,)) for i in range(len(string)+1))
+    automaton.transitions=transitions = {frozenset((i,)): {string[i]: frozenset((frozenset((i+1,)),))} for i in range(len(string))}
+    automaton.final_states=frozenset((frozenset((len(string),)),))
   else:
     # The automaton is already defined in the json file, just convert it to a fda
     final_states = {state for state in token_data["final_states"]}
@@ -92,17 +76,18 @@ for token_type, token_data in token_types.items():
         states.update(next_states)
     automaton.states=frozenset(states)
     automaton.transitions=transitions
-    automaton.initial_state=frozenset((0,))
     automaton.final_states=frozenset(frozenset((i,)) for i in final_states)
-    automata[token_type] = automaton
+  automaton.state_token_table = {state: token_type for state in automaton.final_states}
+  automaton.initial_state = frozenset((0,))
+  automata.append((token_type, automaton))
 
 mega_automaton = None
-for token_type, automaton in automata.items():
+for token_type, automaton in automata:
   if mega_automaton is None: mega_automaton = automaton
   else: mega_automaton = mega_automaton.union(automaton)
 
 mega_automaton = mega_automaton.deterministic_equivalent().enumerate_states()
-mega_automaton.save("../machines/lexer.automata")
+mega_automaton.save("../machines/lexer")
 print("Lexer generated successfully.")
 print(f"Lexer has {len(automata)} automata and {len(mega_automaton.final_states)} final states.")
 print(f"Lexer has {len(mega_automaton.states)} states and {mega_automaton.transition_count()} transitions.")
