@@ -81,7 +81,7 @@ class FDA:
     a = self.copy().enumerate_states()
     b = other.copy().enumerate_states()
     union = FDA()
-    b_start = len(a.transitions)+1
+    b_start = len(a.states)+1
 
     union.initial_state = frozenset((0,))
     union.alphabet = a.alphabet.union(b.alphabet)
@@ -258,8 +258,9 @@ if __name__ == "__main__":
           print(f"{state} --{symbol}--> {next_state}")
     print()
 
-  fda = FDA("2;b;{d};{a,0};b,a,d;d,a,d;d,0,d")
-  fdb = FDA("2;0;{1};{c,d};0,c,1;0,d,1;1,c,0;1,d,0")
-  for transition, next_state in fda.transitions.items():
+  fda = FDA("2;0;{1};{a};0,a,1")
+  fdb = FDA("2;0;{1};{b};0,b,1")
+  fdc = fda.union(fdb)
+  for transition, next_state in fdc.transitions.items():
     for symbol, next_states in next_state.items():
       print(f"{transition} --{symbol}--> {next_states}")

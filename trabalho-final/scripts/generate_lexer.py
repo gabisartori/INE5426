@@ -2,7 +2,7 @@ import json
 from fda import FDA
 
 VALID_LETTERS = {
-  chr(i) for i in range(256) if chr(i).isalpha() and chr(i).islower()
+  chr(i) for i in range(97, 98) if chr(i).isalpha() and chr(i).islower()
 }
 
 with open("../grammars/tokens.json", "r") as f: token_types = json.load(f)
