@@ -2,7 +2,7 @@ import json
 from fda import FDA
 
 VALID_LETTERS = {
-  chr(i) for i in range(97, 98) if chr(i).isalpha() and chr(i).islower()
+  chr(i) for i in range(256) if chr(i).isalpha() and chr(i).islower()
 }
 
 with open("../grammars/tokens.json", "r") as f: token_types = json.load(f)
@@ -99,19 +99,49 @@ mega_automaton = None
 for token_type, automaton in automata.items():
   if mega_automaton is None: mega_automaton = automaton
   else: mega_automaton = mega_automaton.union(automaton)
-  if token_type == "const_char" or token_type == "const_string":
-    i = 0
-    for state, next_states in mega_automaton.transitions.items():
-      for symbol, next_state in next_states.items():
-        i += len(next_state)
-        print(state, symbol, next_state)
-    print(i)
+  print(token_type, mega_automaton.transition_count())  
 
-# for state, next_states in mega_automaton.transitions.items():
-#   for symbol, next_state in next_states.items():
-#     print(state, symbol, next_state)
-# mega_automaton = mega_automaton.deterministic_equivalent().enumerate_states()
-# print()
-# for state, next_states in mega_automaton.transitions.items():
-#   for symbol, next_state in next_states.items():
-#     print(state, symbol, next_state)
+def int_to_64(number):
+  """Converts an integer to a base64 string."""
+  base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  result = ""
+  while number > 0:
+    result = base64_chars[number % 64] + result
+    number //= 64
+  return result if result else "0"
+
+def base64_to_int(base64_str):
+  """Converts a base64 string to an integer."""
+  base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  result = 0
+  for char in base64_str:
+    result = result * 64 + base64_chars.index(char)
+  return result
+
+def clear_state(state): 
+  string = ""
+  for state_part in state:
+    if isinstance(state_part, frozenset):
+      string += str(state_part)[11:-2]
+    else:
+      string += str(state_part)
+  number = int(string)
+  number_base64 = int_to_64(number)
+  return number
+
+mega_automaton = mega_automaton.deterministic_equivalent().enumerate_states()
+transition_list = []
+for state in sorted(mega_automaton.transitions):
+  for symbol in sorted(mega_automaton.transitions[state]):
+    for next_state in mega_automaton.transitions[state][symbol]:
+      transition_list.append((clear_state(state), symbol, clear_state(next_state)))
+
+with open("../grammars/lexer.json", "w") as f:
+  json.dump({
+    "transitions": transition_list,
+    "final_states": [clear_state(state) for state in mega_automaton.final_states],
+    "initial_state": clear_state(mega_automaton.initial_state)
+  }, f)
+print("Lexer generated successfully.")
+print(f"Lexer has {len(automata)} automata and {len(mega_automaton.final_states)} final states.")
+print(f"Lexer has {len(mega_automaton.states)} states and {mega_automaton.transition_count()} transitions.")
