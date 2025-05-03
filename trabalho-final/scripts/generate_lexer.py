@@ -19,23 +19,24 @@ for token_type, token_data in token_types.items():
   Para expandir "." para todas as letras aceitas pela linguagem, irei usar or conjunto {chr(i) if chr(i).isalpha() and chr(i).islower() for i in range(256)}
   '''
   if "string" in token_data:
-    # Create a finite automaton for each letter of the string
+    # Create a state for each letter of the string
     strings = token_data["string"]
     if isinstance(strings, str): strings = [strings]
     transitions = {}
     finals = set()
-    counter = 0
+    state_counter = 1 # Start from state 1, as state '0' is the initial state
     for string in strings:
-      if 0 in transitions: transitions[0] = {**transitions[0], **{string[0]: counter+1}}
-      else: transitions[0] = {string[0]: counter+1}
-      start = counter
+      # Create a transition for the first letter of the string from the initial state
+      if 0 in transitions: transitions[0] = {**transitions[0], **{string[0]: state_counter}}
+      else: transitions[0] = {string[0]: state_counter}
+      state_counter += 1
+      # Create the remaining transitions for the string
       for i in range(1, len(string)):
         char = string[i]
-        if start+i in transitions: transitions[start+i] = {**transitions[start+i], **{string[i]: start+i+1}}
-        else: transitions[start+i] = {string[i]: start+i+1}
-        counter += 1
-      counter += 1
-      finals.add(counter-1)
+        if state_counter-1 in transitions: transitions[state_counter-1] = {**transitions[state_counter-1], **{string[i]: state_counter}}
+        else: transitions[state_counter-1] = {string[i]: state_counter}
+        state_counter += 1
+      finals.add(state_counter-1)
     finals = {frozenset((i,)) for i in finals}
     transitions = {
       frozenset((c,)): {
@@ -44,7 +45,7 @@ for token_type, token_data in token_types.items():
       }
     automaton = FDA()
     automaton.alphabet=frozenset(c for string in strings for c in string)
-    automaton.states=frozenset(frozenset((i,)) for i in range(counter+1))
+    automaton.states=frozenset(frozenset((i,)) for i in range(state_counter))
     automaton.transitions=transitions
     automaton.initial_state=frozenset((0,))
     automaton.final_states=finals

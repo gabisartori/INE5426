@@ -121,8 +121,6 @@ class FDA:
   def __str__(self) -> str:
     '''Ouput: finals;transitions'''
     output = "".join([self.state_to_string(state) for state in sorted(self.final_states)]) + chr(255)
-    print(sorted([ord(c) for c in output]))
-    for x in self.transitions[frozenset((0,))]: print(x, self.transitions[frozenset((0,))][x])
     for state in sorted(self.transitions):
       for symbol in sorted(self.transitions[state]):
         for next_state in sorted(self.transitions[state][symbol]):
