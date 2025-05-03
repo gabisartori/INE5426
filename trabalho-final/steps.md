@@ -1,6 +1,8 @@
 # Analisador Léxico
 ## Requisitos
-- [x] Gerar lista de tokens
+- [ ] Gerar lista de tokens
+  - [x] Autômato para reconher qualquer token
+  - [ ] Tabela relacionando estados do autômato aos tokens
 - [ ] Gerar tabela de símbolos
   - [ ] Tipo do token
   - [ ] Valor do token
