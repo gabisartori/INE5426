@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Read};
 use std::error::Error;
 
-use crate::{State, Symbol, token::Command, token::TokenType};
+use crate::{State, Symbol, token::TokenType};
 
 fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
   let mut result = 0;
@@ -16,12 +16,12 @@ fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
 
 pub struct FDA {
   pub initial_state: State,
-  pub transitions: HashMap<(State, Symbol), (State, Option<Command>)>,
+  pub transitions: HashMap<(State, Symbol), State>,
   pub token_table: HashMap<State, TokenType>,
 }
 
 impl FDA {
-  pub fn new(initial_state: State, transitions: HashMap<(State, Symbol), (State, Option<Command>)>, token_table: HashMap<State, TokenType>) -> FDA {
+  pub fn new(initial_state: State, transitions: HashMap<(State, Symbol), State>, token_table: HashMap<State, TokenType>) -> FDA {
 
     FDA { initial_state, transitions, token_table }
   }
@@ -30,7 +30,7 @@ impl FDA {
     let file = File::open(file_path)?;
     let mut reader = BufReader::new(file);
     let mut _final_states: HashSet<u32> = HashSet::new();
-    let mut transitions: HashMap<(State, Symbol), (State, Option<Command>)> = HashMap::new();
+    let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
 
     // The first byte is the number of bytes per state
     // Hopefully no automaton will ever need more than 256 bytes to encode its states
@@ -56,8 +56,7 @@ impl FDA {
           let symbol = transition_buffer[state_size] as char;
           let next_state = byte_vec_into_u32(&transition_buffer[state_size+1..2*state_size+1].try_into().unwrap());
           let transition = next_state;
-          let command: Option<Command> = None;
-          transitions.insert((state, symbol), (transition, command));
+          transitions.insert((state, symbol), transition);
         },
         Err(_) => break,
       }

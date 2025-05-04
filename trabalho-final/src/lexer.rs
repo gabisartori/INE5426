@@ -32,8 +32,7 @@ impl Lexer {
       let next_state = self.fda.transitions.get(&(current_state, character));
       match next_state {
         // If the transition is valid, just update the state and the token value
-        // The command is not used in this example, but it could be used to perform actions
-        Some((next_state, _command)) => {
+        Some(next_state) => {
           current_state = *next_state;
           // Ignore empty spaces
           if !(character.is_whitespace()) { token_value.push(character); }
@@ -60,7 +59,7 @@ impl Lexer {
           // Check if the current character is a valid start of a token
           // If it is, execute the transition
           // If it is not, return the lexical error and reset the state
-          if let Some((next_state, _command)) = self.fda.transitions.get(&(self.fda.initial_state, character)) {
+          if let Some(next_state) = self.fda.transitions.get(&(self.fda.initial_state, character)) {
             current_state = *next_state;
             if !character.is_whitespace() { token_value.push(character); }
           } else {

@@ -138,7 +138,3 @@ impl Token {
     format!("Token {{ type: {:?}, value: {}, line: {}, column: {} }}", self.token_type, value_str, self.line, self.column)
   }
 }
-
-pub enum Command {
-  Push
-}
