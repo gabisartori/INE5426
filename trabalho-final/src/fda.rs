@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Read};
 use std::error::Error;
 
-use crate::{State, Symbol, Command, Token};
+use crate::{State, Symbol, token::Command, token::TokenType};
 
 fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
   let mut result = 0;
@@ -17,11 +17,11 @@ fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
 pub struct FDA {
   pub initial_state: State,
   pub transitions: HashMap<(State, Symbol), (State, Option<Command>)>,
-  pub token_table: HashMap<State, Token>,
+  pub token_table: HashMap<State, TokenType>,
 }
 
 impl FDA {
-  pub fn new(initial_state: State, transitions: HashMap<(State, Symbol), (State, Option<Command>)>, token_table: HashMap<State, Token>) -> FDA {
+  pub fn new(initial_state: State, transitions: HashMap<(State, Symbol), (State, Option<Command>)>, token_table: HashMap<State, TokenType>) -> FDA {
 
     FDA { initial_state, transitions, token_table }
   }
@@ -72,7 +72,7 @@ impl FDA {
       let parts: Vec<&str> = line.split(':').collect();
       if parts.len() != 2 { return Err("Invalid token table format".into()); }
       let state = parts[0].parse::<u32>()?;
-      let token = Token::from_str(parts[1])?;
+      let token = TokenType::from_str(parts[1])?;
       token_table.insert(state, token);
     }
 
