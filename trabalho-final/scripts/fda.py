@@ -129,6 +129,22 @@ class FDA:
       number //= 256
     return output
 
+  def as_bytes(self) -> bytes:
+    output = bytearray()
+    state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
+    output.append(state_size)
+    for state in sorted(self.final_states, key=lambda x: sorted(x)):
+      if len(state) > 1: raise ValueError("Estado final não pode ser um conjunto.")
+      output.append(list(state)[0])
+    output.extend([255]*state_size)
+    for state in self.transitions:
+      for symbol in sorted(self.transitions[state]):
+        for next_state in sorted(self.transitions[state][symbol]):
+          output.append(list(state)[0])
+          output.append(ord(symbol))
+          output.append(list(next_state)[0])
+    return output
+
   def __str__(self) -> str:
     '''Ouput: finals;transitions'''
     state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
@@ -244,7 +260,7 @@ class FDA:
   def save(self, filename: str) -> None:
     '''Salva o autômato em um arquivo.'''
     state_table = {"".join([str(x) for x in state]): self.state_token_table[state] for state in self.state_token_table}
-    with open(f"{filename}.automata", "w") as f: f.write(str(self))
+    with open(f"{filename}.automata", "wb") as f: f.write(self.as_bytes())
     with open(f"{filename}_tabela.automata", "w") as f: json.dump(state_table, f, indent=2)
 
 if __name__ == "__main__":

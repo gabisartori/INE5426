@@ -8,22 +8,20 @@ string = sys.argv[1]
 final_states = set()
 transitions = {}
 
-with open("../machines/lexer.automata", "r") as f:
-  state_size = ord(f.read(1))
+with open("../machines/lexer.automata", "rb") as f:
+  state_size = int.from_bytes(f.read(1), byteorder='big')
   while True:
-    char = f.read(state_size)
-    if char == chr(255)*state_size: break
-    state_num = 0
-    for byte in char: state_num = (state_num << 8) + ord(byte)
+    bytes = f.read(state_size)
+    if bytes == bytearray([255]*state_size): break
+    state_num = int.from_bytes(bytes, byteorder='big')
     final_states.add(state_num)
   
   while transition := f.read(2*state_size+1):
     current_state, symbol, next_state = transition[:state_size], transition[state_size:state_size+1], transition[state_size+1:]
-    cs_n = 0
-    ns_n = 0
-    for byte in current_state: cs_n = (cs_n << 8) + ord(byte)
-    for byte in next_state: ns_n = (ns_n << 8) + ord(byte)
-    transitions[(cs_n, symbol)] = ns_n
+    cs_n = int.from_bytes(current_state, byteorder='big')
+    ns_n = int.from_bytes(next_state, byteorder='big')
+    symbol = int.from_bytes(symbol, byteorder='big')
+    transitions[(cs_n, chr(symbol))] = ns_n
 
 current_state = 0
 with open("../machines/lexer_tabela.automata", "r") as f:
