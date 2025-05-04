@@ -259,9 +259,10 @@ class FDA:
 
   def save(self, filename: str) -> None:
     '''Salva o autômato em um arquivo.'''
-    state_table = {"".join([str(x) for x in state]): self.state_token_table[state] for state in self.state_token_table}
+    state_token_list = ""
+    for state in self.state_token_table: state_token_list += f"{list(state)[0]}:{self.state_token_table[state]}\n"
     with open(f"{filename}.automata", "wb") as f: f.write(self.as_bytes())
-    with open(f"{filename}_tabela.automata", "w") as f: json.dump(state_table, f, indent=2)
+    with open(f"{filename}_table.automata", "w") as f: f.write(state_token_list)
 
 if __name__ == "__main__":
   def show_automaton(automaton: FDA) -> None:
