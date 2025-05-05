@@ -22,10 +22,9 @@ impl Lexer {
     let mut string_or_char = false;
     for char in input.chars() {
       // Keep track of current position in the input
-      if char == '\n' { line_count += 1; column_count = 0; } 
-      else if char != '\n' { column_count += 1; }
+      column_count += 1;
       // Language only accepts uppercase letters inside of strings
-      else if char == '"' || char == '\'' { string_or_char = !string_or_char; }
+      if char == '"' || char == '\'' { string_or_char = !string_or_char; }
       let character = if !string_or_char && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
       
       // Process the character
@@ -68,6 +67,7 @@ impl Lexer {
           }
         }
       }
+      if char == '\n' { line_count += 1; column_count = 0; }
     }
     // If the last token is valid, add it to the list
     if self.fda.token_table.contains_key(&current_state) {
