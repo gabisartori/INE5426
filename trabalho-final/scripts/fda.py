@@ -133,10 +133,6 @@ class FDA:
     output = bytearray()
     state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
     output.append(state_size)
-    for state in sorted(self.final_states, key=lambda x: sorted(x)):
-      if len(state) > 1: raise ValueError("Estado final não pode ser um conjunto.")
-      output.append(list(state)[0])
-    output.extend([255]*state_size)
     for state in self.transitions:
       for symbol in sorted(self.transitions[state]):
         for next_state in sorted(self.transitions[state][symbol]):

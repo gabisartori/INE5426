@@ -29,7 +29,6 @@ impl FDA {
   pub fn from_file(file_path: &str) -> Result<FDA, Box<dyn Error>> {
     let file = File::open(file_path)?;
     let mut reader = BufReader::new(file);
-    let mut _final_states: HashSet<u32> = HashSet::new();
     let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
 
     // The first byte is the number of bytes per state
@@ -37,15 +36,6 @@ impl FDA {
     let mut buffer = [0u8; 1];
     reader.read_exact(&mut buffer)?;
     let state_size = buffer[0] as usize;
-    
-    // Next sequences of state_size bytes until [255]*state_size are the final states
-    loop {
-      let mut state_buffer = vec![0u8; state_size];
-      reader.read_exact(&mut state_buffer)?;
-      let state = byte_vec_into_u32(&state_buffer);
-      if state == 255 { break; }
-      _final_states.insert(state);
-    }
     // Next groups of bytes are the transitions, in the format
     // (state, symbol, next_state). Each symbol is a single byte
     loop {
