@@ -9,7 +9,7 @@ pub struct Lexer {
 
 impl Lexer {
   pub fn new() -> Lexer {
-    let fda = FDA::from_file("machines/lexer.automata").expect("Lexer automata file not found");
+    let fda = FDA::from_file().expect("Lexer automata file not found");
     Lexer { fda }
   }
 

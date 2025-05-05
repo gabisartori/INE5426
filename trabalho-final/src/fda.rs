@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufReader, BufRead, Read};
+use std::io::{BufReader, BufRead};
 use std::error::Error;
 
 use crate::{State, Symbol, token::TokenType};
@@ -26,29 +26,27 @@ impl FDA {
     FDA { initial_state, transitions, token_table }
   }
 
-  pub fn from_file(file_path: &str) -> Result<FDA, Box<dyn Error>> {
-    let file = File::open(file_path)?;
-    let mut reader = BufReader::new(file);
+  pub fn from_file() -> Result<FDA, Box<dyn Error>> {
+    let raw_bytes = include_bytes!("../machines/lexer.automata");
     let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
 
     // The first byte is the number of bytes per state
     // Hopefully no automaton will ever need more than 256 bytes to encode its states
-    let mut buffer = [0u8; 1];
-    reader.read_exact(&mut buffer)?;
-    let state_size = buffer[0] as usize;
+    let state_size = raw_bytes[0] as usize;
     // Next groups of bytes are the transitions, in the format
     // (state, symbol, next_state). Each symbol is a single byte
-    loop {
-      let mut transition_buffer: Vec<u8> = vec![0u8; 2*state_size+1];
-      match reader.read_exact(&mut transition_buffer) {
-        Ok(_) => {
-          let state = byte_vec_into_u32(&transition_buffer[..state_size].try_into().unwrap());
-          let symbol = transition_buffer[state_size] as char;
-          let next_state = byte_vec_into_u32(&transition_buffer[state_size+1..2*state_size+1].try_into().unwrap());
+    let mut i = 1;
+    while i < raw_bytes.len() {
+      match raw_bytes.get(i..i+2*state_size+1) {
+        Some(transition) => {
+          let state = byte_vec_into_u32(&transition[..state_size].try_into().unwrap());
+          let symbol = transition[state_size] as char;
+          let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1].try_into().unwrap());
           let transition = next_state;
           transitions.insert((state, symbol), transition);
+          i += 2*state_size + 1;
         },
-        Err(_) => break,
+        None => break,
       }
     }
     
