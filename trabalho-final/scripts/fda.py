@@ -24,7 +24,7 @@ class FDA:
   def is_deterministic(self):
     '''Busca por transições por ε ou por um estado que tenha mais de um destino para um mesmo símbolo.'''
     for state in self.transitions:
-      if "&" in self.transitions[state]: return False
+      if "" in self.transitions[state]: return False
       for symbol in self.alphabet:
         if symbol not in self.transitions[state]: continue
         if len(self.transitions[state][symbol]) > 1: return False
@@ -86,7 +86,7 @@ class FDA:
     }
     self_initial_trasitions = {
       union.initial_state: {
-        '&': frozenset((frozenset((1,)), frozenset((b_start,))))
+        '': frozenset((frozenset((1,)), frozenset((b_start,))))
       }
     }
     union.transitions = {
@@ -156,9 +156,9 @@ class FDA:
     def epsilon_closure(state: State, closure: set=None) -> State:
       '''Retorna o ε* de um estado, realizando uma busca em profundidade.'''
       if closure is None: closure = set(state)
-      if state not in self.transitions or "&" not in self.transitions[state]: return frozenset(closure)
+      if state not in self.transitions or "" not in self.transitions[state]: return frozenset(closure)
 
-      for reachable_state in self.transitions[state]["&"]:
+      for reachable_state in self.transitions[state][""]:
         if reachable_state not in closure:
           reachable_state_closure: State = epsilon_closure(reachable_state)
           closure.update(reachable_state_closure)
@@ -183,7 +183,7 @@ class FDA:
     deterministic.initial_state = states_epsilon_closure[self.initial_state]
     
     # O alfabeto do autômato determinístico é o mesmo do autômato não determinístico, sem o símbolo ε
-    deterministic.alphabet = self.alphabet.copy().difference({"&"})
+    deterministic.alphabet = self.alphabet.copy().difference({""})
     
     # Começa a construir as transições do autômato determinístico, partindo do estado inicial
     deterministic.transitions = {}
@@ -199,7 +199,7 @@ class FDA:
         deterministic.transitions[current_state] = {}
 
       # Para cada símbolo do alfabeto, visita os estados alcançáveis a partir do estado atual
-      for symbol in sorted(deterministic.alphabet.difference({"&"})):
+      for symbol in sorted(deterministic.alphabet.difference({""})):
         next_state: set[str] = set()
         for state in sorted(current_state):
           state = frozenset((state,))
