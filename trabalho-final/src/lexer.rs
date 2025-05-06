@@ -51,6 +51,10 @@ impl Lexer {
               column: column_count-token_value.len(),
             };
             token_list.push(token);
+          } else {
+            // If the current state is not a final state, we have an invalid token
+            // Print an error message and discard the token
+            println!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value);
           }
 
           token_value.clear();
