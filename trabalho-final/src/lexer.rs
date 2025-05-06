@@ -23,8 +23,9 @@ impl Lexer {
     for char in input.chars() {
       // Keep track of current position in the input
       column_count += 1;
-      // Language only accepts uppercase letters inside of strings
       if char == '"' || char == '\'' { string_or_char = !string_or_char; }
+      else if current_state == self.fda.initial_state && char.is_whitespace() { continue; }
+      // Language only accepts uppercase letters inside of strings
       let character = if !string_or_char && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
       
       // Process the character
@@ -33,8 +34,7 @@ impl Lexer {
         // If the transition is valid, just update the state and the token value
         Some(next_state) => {
           current_state = *next_state;
-          // Ignore empty spaces
-          if !(character.is_whitespace()) { token_value.push(character); }
+          token_value.push(character);
         },
         // If the transition is invalid, check if the current state is a final state
         // If it is, this means that a valid token was found
