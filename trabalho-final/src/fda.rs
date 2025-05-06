@@ -66,4 +66,13 @@ impl FDA {
     let fda = FDA::new(0, transitions, token_table);
     Ok(fda)
   }
+
+  pub fn transtion(&self, state: State, symbol: Symbol) -> Option<&State> {
+    if self.transitions.contains_key(&(state, symbol)) { self.transitions.get(&(state, symbol)) }
+    // Group transitions: If the specific character doesn't have a transition, check if there's a transition for a group in which the character belongs
+    // Yeah for now there are no groups and I'm not sure if there'll ever be any.
+    // If the all groups above failed, check for the wildcard symbol. It skips any check and just runs the transition for whatever symbol it has read
+    else if self.transitions.contains_key(&(state, '\x00')) { self.transitions.get(&(state, '\x00')) }
+    else { None }
+  }
 }

@@ -28,7 +28,7 @@ impl Lexer {
       let character = if !string_or_char && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
       
       // Process the character
-      let next_state = self.fda.transitions.get(&(current_state, character));
+      let next_state = self.fda.transtion(current_state, character);
       match next_state {
         // If the transition is valid, just update the state and the token value
         Some(next_state) => {

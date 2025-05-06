@@ -1,12 +1,12 @@
 # THIS IS A TESTING SCRIPT
 # This script is only used to test if the automaton serialization is correct
 # It may not be up to date with the lastest form of serialization if the tests happened directly in the actual deserialization in the lexer 
-import sys
+# import sys
 
-if len(sys.argv) != 2:
-  print("Usage: python test.py <string>")
-  sys.exit(1)
-string = sys.argv[1]
+# if len(sys.argv) != 2:
+#   print("Usage: python test.py <string>")
+#   sys.exit(1)
+# string = sys.argv[1]
 
 transitions = {}
 
@@ -28,8 +28,10 @@ with open("../machines/lexer_table.automata", "r") as f:
     state = int(state)
     if state in state_token_list: print(f"Warning: State {state} already has a token '{state_token_list[state]}', overwriting with '{token}'")
     state_token_list[state] = token
-for char in string:
+
+for char in '"Hello world"':
   if (current_state, char) in transitions: current_state = transitions[(current_state, char)]
+  elif (current_state, chr(0)) in transitions: current_state = transitions[(current_state, chr(0))]
   else:
     print(f"Error: No transition from state {current_state} with symbol '{char}'")
     current_state = -1

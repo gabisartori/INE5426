@@ -57,7 +57,8 @@ for token_type, token_data in token_types:
           transitions[current_state][str(i)] = next_state
           alphabet.add(str(i))
       elif symbol == "\\.":
-        transitions[current_state]["\\."] = next_state
+        transitions[current_state][chr(0)] = next_state
+        alphabet.add(chr(0))
       else:
         raise ValueError(f"Invalid symbol {symbol} in transitions")
 
