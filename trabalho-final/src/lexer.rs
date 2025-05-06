@@ -1,7 +1,6 @@
 use crate::fda::FDA;
-use crate::token::Token;
+use crate::token::{ConstType, Token};
 use std::error::Error;
-
 
 pub struct Lexer {
   pub fda: FDA
@@ -46,7 +45,7 @@ impl Lexer {
             let token_type = self.fda.token_table.get(&current_state).unwrap();
             let token = Token{
               token_type: *token_type,
-              value: if token_type.has_value() {Some(token_value.clone())} else { None },
+              value: if token_type.has_value() {Some(ConstType::from_str(&token_value))} else { None },
               line: line_count,
               column: column_count-token_value.len(),
             };
@@ -78,7 +77,7 @@ impl Lexer {
       let token_type = self.fda.token_table.get(&current_state).unwrap();
       let token = Token{
         token_type: *token_type,
-        value: if token_type.has_value() {Some(token_value.clone())} else { None },
+        value: if token_type.has_value() {Some(ConstType::from_str(&token_value))} else { None },
         line: line_count,
         column: column_count-token_value.len(),
       };

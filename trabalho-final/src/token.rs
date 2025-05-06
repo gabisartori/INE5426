@@ -121,10 +121,58 @@ impl TokenType {
   }
 }
 
+#[derive(Clone)]
+pub enum ConstType {
+  Char(char),
+  Bool(bool),
+  Int(i64),
+  Float(f64),
+  String(String),
+  KeyWord(String),
+}
+
+impl ConstType {
+  pub fn from_str(s: &str) -> ConstType {
+    if s.starts_with('\'') && s.ends_with('\'') && s.len() == 3 { return ConstType::Char(s.chars().nth(1).unwrap()); }
+    if s == "true" { return ConstType::Bool(true); }
+    if s == "false" { return ConstType::Bool(false); }
+    if let Ok(i) = s.parse::<i64>() { return ConstType::Int(i); }
+    if let Ok(f) = s.parse::<f64>() { return ConstType::Float(f); }
+    if s.starts_with('"') && s.ends_with('"') { return ConstType::String(s[1..s.len()-1].to_string()); }
+    ConstType::KeyWord(s.to_string())
+  }
+}
+
+impl std::fmt::Debug for ConstType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ConstType::Char(c) => write!(f, "'{}'", c),
+      ConstType::Bool(b) => write!(f, "{}", b),
+      ConstType::Int(i) => write!(f, "{}", i),
+      ConstType::Float(fl) => write!(f, "{}", fl),
+      ConstType::String(s) => write!(f, "\"{}\"", s),
+      ConstType::KeyWord(s) => write!(f, "{}", s),
+    }
+  }
+}
+
+impl std::fmt::Display for ConstType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ConstType::Char(c) => write!(f, "{}", c),
+      ConstType::Bool(b) => write!(f, "{}", b),
+      ConstType::Int(i) => write!(f, "{}", i),
+      ConstType::Float(fl) => write!(f, "{}", fl),
+      ConstType::String(s) => write!(f, "{}", s),
+      ConstType::KeyWord(s) => write!(f, "{}", s),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct Token {
   pub token_type: TokenType,
-  pub value: Option<String>,
+  pub value: Option<ConstType>,
   pub line: usize,
   pub column: usize,
 }
@@ -132,7 +180,13 @@ pub struct Token {
 impl Token {
   pub fn to_string(&self) -> String {
     let value_str = match &self.value {
-      Some(value) => format!("'{}'", value),
+      Some(value) => {
+        match value {
+          ConstType::Char(c) => format!("'{}'", c),
+          ConstType::String(s) => format!("\"{}\"", s),
+          _ => format!("{}", value),
+        }
+      },
       None => String::new(),
     };
     format!("Token {{ type: {:?}, value: {}, line: {}, column: {} }}", self.token_type, value_str, self.line, self.column)
